@@ -1,11 +1,11 @@
 package com.ejadit.ecommerce.common.exception;
 
 import com.ejadit.ecommerce.common.dto.ErrorResponseDto;
+import com.ejadit.ecommerce.common.dto.FieldErrorDto;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -23,6 +23,10 @@ public class GlobalExceptionHandler {
 
     public GlobalExceptionHandler(MessageSource messageSource) {
         this.messageSource = messageSource;
+    }
+
+    private String generateTraceId() {
+        return UUID.randomUUID().toString().substring(0, 12);
     }
 
     // Handle custom business exceptions
@@ -41,9 +45,10 @@ public class GlobalExceptionHandler {
         ErrorResponseDto errorResponse = ErrorResponseDto.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .error("BUSINESS_ERROR")
                 .message(translatedMessage)
                 .path(request.getRequestURI())
+                .traceId(generateTraceId())
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
@@ -55,22 +60,17 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
-        List<Map<String, String>> fieldErrors = ex.getBindingResult()
+        List<FieldErrorDto> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(error -> Map.of(
-                        "field", error.getField(),
-                        "message", error.getDefaultMessage(),
-                        "rejectedValue", String.valueOf(error.getRejectedValue())
-                ))
+                .map(error -> FieldErrorDto.builder()
+                        .field(error.getField())
+                        .message(error.getDefaultMessage())
+                        .rejectedValue(String.valueOf(error.getRejectedValue()))
+                        .code(convertConstraintNameToCode(error.getCode()))
+                        .build()
+                )
                 .collect(Collectors.toList());
-
-        String validationErrorTitle = messageSource.getMessage(
-                "error.validation",
-                null,
-                "Validation Error",
-                LocaleContextHolder.getLocale()
-        );
 
         String validationErrorMessage = messageSource.getMessage(
                 "error.validation.failed",
@@ -82,10 +82,11 @@ public class GlobalExceptionHandler {
         ErrorResponseDto errorResponse = ErrorResponseDto.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error(validationErrorTitle)
+                .error("VALIDATION_ERROR")
                 .message(validationErrorMessage)
                 .path(request.getRequestURI())
                 .errors(fieldErrors)
+                .traceId(generateTraceId())
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
@@ -107,11 +108,23 @@ public class GlobalExceptionHandler {
         ErrorResponseDto errorResponse = ErrorResponseDto.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
+                .error("INTERNAL_SERVER_ERROR")
                 .message(errorMessage + ": " + ex.getMessage())
                 .path(request.getRequestURI())
+                .traceId(generateTraceId())
                 .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    private String convertConstraintNameToCode(String constraintCode) {
+        // Convert validation annotation names to codes
+        // NotBlank -> NOT_BLANK
+        // NotNull -> NOT_NULL
+        // Email -> INVALID_EMAIL
+        // etc.
+        return constraintCode
+                .replaceAll("([a-z])([A-Z])", "$1_$2")
+                .toUpperCase();
     }
 }

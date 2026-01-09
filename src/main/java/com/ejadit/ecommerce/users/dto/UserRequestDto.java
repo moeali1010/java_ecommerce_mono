@@ -30,24 +30,24 @@ public class UserRequestDto {
         this.mobileNumber = mobileNumber;
     }
 
-    @NotBlank(message = "الاسم مطلوب ولا يمكن أن يكون فارغاً")
+    @NotBlank(message = "{validation.name.required}")
     private final String name;
 
-    @NotBlank(message = "اسم المستخدم مطلوب ولا يمكن أن يكون فارغاً")
+    @NotBlank(message = "{validation.username.required}")
     private final String userName;
 
-    @NotBlank(message = "كلمة المرور مطلوبة ولا يمكن أن تكون فارغة")
+    @NotBlank(message = "{validation.password.required}")
     private final String password;
 
-    @NotBlank(message = "تأكيد كلمة المرور مطلوب ولا يمكن أن يكون فارغاً")
+    @NotBlank(message = "{validation.confirmPassword.required}")
     private final String confirmPassword;
 
-    @NotBlank(message = "البريد الإلكتروني مطلوب ولا يمكن أن يكون فارغاً")
-    @Email(message = "يرجى إدخال بريد إلكتروني صحيح")
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     private final String email;
 
     private final UserType userType;
 
-    @NotBlank(message = "رقم الهاتف مطلوب ولا يمكن أن يكون فارغاً")
+    @NotBlank(message = "{validation.mobileNumber.required}")
     private final String mobileNumber;
 }
