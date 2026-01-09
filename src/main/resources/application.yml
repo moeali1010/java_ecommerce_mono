@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: ecommerce
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/java_ecommerce_mono?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  messages:
+    basename: messages
+    encoding: UTF-8
+
+#   mail:
+#     host: smtp.gmail.com
+#     port: 587
+#     username: hammamwash@gmail.com
+#     password: clcabzuhtvbojgii
+#     properties:
+#       mail:
+#         smtp:
+#           auth: true
+#           starttls:
+#             enable: true
+#     from: no-reply@hammam.com
+
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    try-it-out-enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework: INFO
+    com.users: DEBUG
