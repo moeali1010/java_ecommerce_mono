@@ -4,6 +4,7 @@ import com.ejadit.ecommerce.common.dto.ResponseDto;
 import com.ejadit.ecommerce.common.exception.BusinessException;
 import com.ejadit.ecommerce.users.dto.UserRequestDto;
 import com.ejadit.ecommerce.users.entity.UserEntity;
+import com.ejadit.ecommerce.users.entity.UserStatus;
 import com.ejadit.ecommerce.users.mapper.UserMapper;
 import com.ejadit.ecommerce.users.repository.UserRepository;
 import com.ejadit.ecommerce.users.service.IUserInterface;
@@ -13,6 +14,7 @@ import com.ejadit.ecommerce.common.dto.FieldErrorDto;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
 import com.ejadit.ecommerce.users.entity.UserType;
+import com.ejadit.ecommerce.users.entity.UserStatus;
 
 @Service
 public class UserServiceImpl implements IUserInterface {
@@ -21,7 +23,7 @@ public class UserServiceImpl implements IUserInterface {
     private final PasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -75,7 +77,7 @@ public class UserServiceImpl implements IUserInterface {
             throw new BusinessException("user.mobile.exists");
         }
 
-        //userType should be  ADMIN or CUSTOMER
+        // userType should be ADMIN or CUSTOMER
         UserType userTypeEnum = requestDto.toUserTypeEnum();
         if (userTypeEnum == null) {
             throw new BusinessException("validation.userType.invalid",
@@ -87,12 +89,19 @@ public class UserServiceImpl implements IUserInterface {
                             .build()));
         }
 
+        // Set userStatus to ACTIVE if not provided
+        UserStatus userStatusEnum = requestDto.toUserStatusEnum();
+        if (userStatusEnum == null) {
+            userStatusEnum = UserStatus.ACTIVE; // Default value
+        }
+
         // Proceed to transactional part only after all validations pass
-        return doCreateUser(requestDto, userTypeEnum);
+        return doCreateUser(requestDto, userTypeEnum, userStatusEnum);
     }
 
     @Transactional
-    protected ResponseDto<UserEntity> doCreateUser(UserRequestDto requestDto, UserType userTypeEnum) {
+    protected ResponseDto<UserEntity> doCreateUser(UserRequestDto requestDto, UserType userTypeEnum,
+            UserStatus userStatusEnum) {
 
         // 5) Map DTO → Entity
         UserEntity userEntity = UserMapper.toEntity(requestDto);
@@ -101,6 +110,7 @@ public class UserServiceImpl implements IUserInterface {
         String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
         userEntity.setPassword(encodedPassword);
         userEntity.setUserType(userTypeEnum);
+        userEntity.setUserStatus(userStatusEnum);
 
         // 7) Save entity
         UserEntity savedUser = userRepository.save(userEntity);
@@ -193,11 +203,27 @@ public class UserServiceImpl implements IUserInterface {
                             .build()));
         }
 
+        // Validate and update userStatus (optional, but must be valid if provided)
+        if (requestDto.getUserStatus() != null && !requestDto.getUserStatus().trim().isEmpty()) {
+            UserStatus userStatusEnum = requestDto.toUserStatusEnum();
+            if (userStatusEnum == null) {
+                throw new BusinessException("validation.userStatus.invalid",
+                        List.of(FieldErrorDto.builder()
+                                .field("userStatus")
+                                .message("validation.userStatus.invalid")
+                                .rejectedValue(requestDto.getUserStatus())
+                                .code("INVALID_ENUM")
+                                .build()));
+            }
+            existingUser.setUserStatus(userStatusEnum);
+        }
+
         // Update user fields
         existingUser.setUserName(requestDto.getUserName());
         existingUser.setEmail(requestDto.getEmail());
         existingUser.setMobileNumber(requestDto.getMobileNumber());
         existingUser.setUserType(userTypeEnum);
+       
 
         // Update password only if provided
         if (requestDto.getPassword() != null && !requestDto.getPassword().trim().isEmpty()) {

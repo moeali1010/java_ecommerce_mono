@@ -19,7 +19,8 @@ public class UserMapper {
             dto.getPassword(),
             dto.getEmail(),
             dto.getMobileNumber(),
-            dto.toUserTypeEnum());
+            dto.toUserTypeEnum(),
+            dto.toUserStatusEnum());
     }
 
     public static UserResponseDto toUserResponseDto(UserEntity user) {
@@ -32,6 +33,7 @@ public class UserMapper {
                 .email(user.getEmail())
                 .mobileNumber(user.getMobileNumber())
                 .userType(user.getUserType())
+                .userStatus(user.getUserStatus())
                 .build();
     }
 

@@ -44,6 +44,10 @@ public class UserEntity extends BaseEntity {
     @Column(name = "user_type", nullable = false)
     private UserType userType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_status", nullable = false)
+    private UserStatus userStatus;
+
     // ================= FACTORY METHOD =================
 
     public static UserEntity create(String name,
@@ -51,11 +55,17 @@ public class UserEntity extends BaseEntity {
             String password,
             String email,
             String mobileNumber,
-            UserType userType) {
+            UserType userType,
+            UserStatus userStatus) {
 
         // Domain validation (NOT frontend validation)
         if (userType == null) {
             throw new IllegalArgumentException("User type is required");
+        }
+
+        // Default to ACTIVE if not provided
+        if (userStatus == null) {
+            userStatus = UserStatus.ACTIVE;
         }
 
         UserEntity user = new UserEntity();
@@ -65,6 +75,7 @@ public class UserEntity extends BaseEntity {
         user.email = email;
         user.mobileNumber = mobileNumber;
         user.userType = userType;
+        user.userStatus = userStatus;
 
         return user;
     }
@@ -77,6 +88,9 @@ public class UserEntity extends BaseEntity {
         this.userType = userType;
     }
 
+    public void setUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
+    }
 
       public void setUserName(String userName) {
         this.userName = userName;

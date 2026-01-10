@@ -1,6 +1,7 @@
 package com.ejadit.ecommerce.users.dto;
 
 import com.ejadit.ecommerce.users.entity.UserType;
+import com.ejadit.ecommerce.users.entity.UserStatus;
 import com.ejadit.ecommerce.users.validator.PasswordMatches;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,6 +23,7 @@ public class UserRequestDto {
             @JsonProperty("confirmPassword") String confirmPassword,
             @JsonProperty("email") String email,
             @JsonProperty("userType") String userType,
+            @JsonProperty("userStatus") String userStatus,
             @JsonProperty("mobileNumber") String mobileNumber) {
         this.name = name;
         this.userName = userName;
@@ -29,6 +31,7 @@ public class UserRequestDto {
         this.confirmPassword = confirmPassword;
         this.email = email;
         this.userType = userType;
+        this.userStatus = userStatus;
         this.mobileNumber = mobileNumber;
     }
 
@@ -51,6 +54,9 @@ public class UserRequestDto {
     @NotBlank(message = "{validation.userType.required}")
     private final String userType;
 
+    // Optional: defaults to ACTIVE if not provided
+    private final String userStatus;
+
     @NotBlank(message = "{validation.mobileNumber.required}")
     private final String mobileNumber;
 
@@ -60,6 +66,17 @@ public class UserRequestDto {
         }
         try {
             return UserType.valueOf(userType.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    public UserStatus toUserStatusEnum() {
+        if (userStatus == null) {
+            return null;
+        }
+        try {
+            return UserStatus.valueOf(userStatus.trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
             return null;
         }
