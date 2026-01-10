@@ -8,5 +8,6 @@ public interface IUserInterface {
     // create user
     ResponseDto<UserEntity> createUser(UserRequestDto requestDto);
 
-   
+    // get user by id
+    ResponseDto<UserEntity> getUserById(Long userId);
 }

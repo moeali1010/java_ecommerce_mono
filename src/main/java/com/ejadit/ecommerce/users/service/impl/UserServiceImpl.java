@@ -108,4 +108,31 @@ public class UserServiceImpl implements IUserInterface {
         // 8) Return standardized response
         return UserMapper.toResponse(savedUser);
     }
+
+    @Override
+    public ResponseDto<UserEntity> getUserById(Long userId) {
+        // Validate userId
+        if (userId == null || userId <= 0) {
+            throw new BusinessException("validation.userId.invalid",
+                    List.of(FieldErrorDto.builder()
+                            .field("userId")
+                            .message("validation.userId.invalid")
+                            .rejectedValue(userId.toString())
+                            .code("INVALID_ID")
+                            .build()));
+        }
+
+        // Find user by id
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("user.not.found",
+                        List.of(FieldErrorDto.builder()
+                                .field("userId")
+                                .message("user.not.found")
+                                .rejectedValue(userId.toString())
+                                .code("NOT_FOUND")
+                                .build())));
+
+        // Return standardized response
+        return UserMapper.toResponse(user);
+    }
 }
