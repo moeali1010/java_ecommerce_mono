@@ -76,4 +76,21 @@ public class UserEntity extends BaseEntity {
     public void setUserType(UserType userType) {
         this.userType = userType;
     }
+
+
+      public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
+
+ 
+
+   
 }

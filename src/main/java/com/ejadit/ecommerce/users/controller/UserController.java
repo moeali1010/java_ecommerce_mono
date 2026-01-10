@@ -101,4 +101,44 @@ public class UserController {
         return ResponseEntity
                 .ok(body);
     }
+
+    @PutMapping("/{userId}")
+    @Operation(
+            summary = "Update user",
+            description = "Updates an existing user with the provided information. Supports internationalization via Accept-Language header.\n\nSupported Languages:\n- 'ar' for Arabic (العربية)\n- 'en' for English"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "User updated successfully",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = UserResponseDto.class)
+            )
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "User not found"
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Validation failed or business rule violation"
+    )
+    public ResponseEntity<UserResponseDto> updateUser(
+            @PathVariable Long userId,
+            @RequestBody @Validated UserRequestDto userRequestDto,
+            @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") String language) {
+
+        // Call service
+        var response = userService.updateUser(userId, userRequestDto);
+
+        // Extract entity
+        UserEntity updatedUser = response.getData();
+
+        // Map to response DTO
+        UserResponseDto body = toUserResponseDto(updatedUser);
+
+        // Return 200 OK
+        return ResponseEntity
+                .ok(body);
+    }
 }

@@ -10,4 +10,7 @@ public interface IUserInterface {
 
     // get user by id
     ResponseDto<UserEntity> getUserById(Long userId);
+
+    // update user
+    ResponseDto<UserEntity> updateUser(Long userId, UserRequestDto requestDto);
 }

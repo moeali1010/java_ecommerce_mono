@@ -135,4 +135,102 @@ public class UserServiceImpl implements IUserInterface {
         // Return standardized response
         return UserMapper.toResponse(user);
     }
+
+    @Override
+    @Transactional
+    public ResponseDto<UserEntity> updateUser(Long userId, UserRequestDto requestDto) {
+        // Validate userId
+        if (userId == null || userId <= 0) {
+            throw new BusinessException("validation.userId.invalid",
+                    List.of(FieldErrorDto.builder()
+                            .field("userId")
+                            .message("validation.userId.invalid")
+                            .rejectedValue(userId.toString())
+                            .code("INVALID_ID")
+                            .build()));
+        }
+
+        // Find existing user
+        UserEntity existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("user.not.found",
+                        List.of(FieldErrorDto.builder()
+                                .field("userId")
+                                .message("user.not.found")
+                                .rejectedValue(userId.toString())
+                                .code("NOT_FOUND")
+                                .build())));
+
+        // Validate username uniqueness (only if changed)
+        if (!existingUser.getUserName().equals(requestDto.getUserName())) {
+            if (userRepository.existsByUserName(requestDto.getUserName())) {
+                throw new BusinessException("user.username.exists");
+            }
+        }
+
+        // Validate email uniqueness (only if changed)
+        if (!existingUser.getEmail().equals(requestDto.getEmail())) {
+            if (userRepository.existsByEmail(requestDto.getEmail())) {
+                throw new BusinessException("user.email.exists");
+            }
+        }
+
+        // Validate mobile number uniqueness (only if changed)
+        if (!existingUser.getMobileNumber().equals(requestDto.getMobileNumber())) {
+            if (userRepository.existsByMobileNumber(requestDto.getMobileNumber())) {
+                throw new BusinessException("user.mobile.exists");
+            }
+        }
+
+        // Validate userType
+        UserType userTypeEnum = requestDto.toUserTypeEnum();
+        if (userTypeEnum == null) {
+            throw new BusinessException("validation.userType.invalid",
+                    List.of(FieldErrorDto.builder()
+                            .field("userType")
+                            .message("validation.userType.invalid")
+                            .rejectedValue(requestDto.getUserType())
+                            .code("INVALID_ENUM")
+                            .build()));
+        }
+
+        // Update user fields
+        existingUser.setUserName(requestDto.getUserName());
+        existingUser.setEmail(requestDto.getEmail());
+        existingUser.setMobileNumber(requestDto.getMobileNumber());
+        existingUser.setUserType(userTypeEnum);
+
+        // Update password only if provided
+        if (requestDto.getPassword() != null && !requestDto.getPassword().trim().isEmpty()) {
+            // Validate confirmPassword
+            if (requestDto.getConfirmPassword() == null || requestDto.getConfirmPassword().trim().isEmpty()) {
+                throw new BusinessException("validation.confirmPassword.required",
+                        List.of(FieldErrorDto.builder()
+                                .field("confirmPassword")
+                                .message("validation.confirmPassword.required")
+                                .rejectedValue(null)
+                                .code("NOT_BLANK")
+                                .build()));
+            }
+
+            if (!requestDto.getPassword().equals(requestDto.getConfirmPassword())) {
+                throw new BusinessException("user.password.mismatch",
+                        List.of(FieldErrorDto.builder()
+                                .field("confirmPassword")
+                                .message("user.password.mismatch")
+                                .rejectedValue(null)
+                                .code("PASSWORD_MISMATCH")
+                                .build()));
+            }
+
+            // Encode and update password
+            String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
+            existingUser.setPassword(encodedPassword);
+        }
+
+        // Save updated user
+        UserEntity updatedUser = userRepository.save(existingUser);
+
+        // Return standardized response
+        return UserMapper.toResponse(updatedUser);
+    }
 }
