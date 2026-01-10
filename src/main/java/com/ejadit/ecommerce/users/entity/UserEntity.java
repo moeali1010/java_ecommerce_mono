@@ -72,4 +72,8 @@ public class UserEntity extends BaseEntity {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public void setUserType(UserType userType) {
+        this.userType = userType;
+    }
 }

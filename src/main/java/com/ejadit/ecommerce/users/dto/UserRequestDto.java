@@ -1,6 +1,7 @@
 package com.ejadit.ecommerce.users.dto;
 
 import com.ejadit.ecommerce.users.entity.UserType;
+import com.ejadit.ecommerce.users.validator.PasswordMatches;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
@@ -10,6 +11,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
+@PasswordMatches
 public class UserRequestDto {
 
     @JsonCreator
@@ -19,7 +21,7 @@ public class UserRequestDto {
             @JsonProperty("password") String password,
             @JsonProperty("confirmPassword") String confirmPassword,
             @JsonProperty("email") String email,
-            @JsonProperty("userType") UserType userType,
+            @JsonProperty("userType") String userType,
             @JsonProperty("mobileNumber") String mobileNumber) {
         this.name = name;
         this.userName = userName;
@@ -46,8 +48,20 @@ public class UserRequestDto {
     @Email(message = "{validation.email.invalid}")
     private final String email;
 
-    private final UserType userType;
+    @NotBlank(message = "{validation.userType.required}")
+    private final String userType;
 
     @NotBlank(message = "{validation.mobileNumber.required}")
     private final String mobileNumber;
+
+    public UserType toUserTypeEnum() {
+        if (userType == null) {
+            return null;
+        }
+        try {
+            return UserType.valueOf(userType.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
 }

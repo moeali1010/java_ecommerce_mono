@@ -9,7 +9,10 @@ import com.ejadit.ecommerce.users.repository.UserRepository;
 import com.ejadit.ecommerce.users.service.IUserInterface;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.ejadit.ecommerce.common.dto.FieldErrorDto;
+import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
+import com.ejadit.ecommerce.users.entity.UserType;
 
 @Service
 public class UserServiceImpl implements IUserInterface {
@@ -24,8 +27,38 @@ public class UserServiceImpl implements IUserInterface {
     }
 
     @Override
-    @Transactional
     public ResponseDto<UserEntity> createUser(UserRequestDto requestDto) {
+
+        // 0) Password & confirm password validation before any DB access
+        if (requestDto.getPassword() == null || requestDto.getPassword().trim().isEmpty()) {
+            throw new BusinessException("validation.password.required",
+                    List.of(FieldErrorDto.builder()
+                            .field("password")
+                            .message("validation.password.required")
+                            .rejectedValue(null)
+                            .code("NOT_BLANK")
+                            .build()));
+        }
+
+        if (requestDto.getConfirmPassword() == null || requestDto.getConfirmPassword().trim().isEmpty()) {
+            throw new BusinessException("validation.confirmPassword.required",
+                    List.of(FieldErrorDto.builder()
+                            .field("confirmPassword")
+                            .message("validation.confirmPassword.required")
+                            .rejectedValue(null)
+                            .code("NOT_BLANK")
+                            .build()));
+        }
+
+        if (!requestDto.getPassword().equals(requestDto.getConfirmPassword())) {
+            throw new BusinessException("user.password.mismatch",
+                    List.of(FieldErrorDto.builder()
+                            .field("confirmPassword")
+                            .message("user.password.mismatch")
+                            .rejectedValue(null)
+                            .code("PASSWORD_MISMATCH")
+                            .build()));
+        }
 
         // 1) Unique username validation
         if (userRepository.existsByUserName(requestDto.getUserName())) {
@@ -42,10 +75,24 @@ public class UserServiceImpl implements IUserInterface {
             throw new BusinessException("user.mobile.exists");
         }
 
-        // 4) Password & confirm password validation
-        if (!requestDto.getPassword().equals(requestDto.getConfirmPassword())) {
-            throw new BusinessException("user.password.mismatch");
+        //userType should be  ADMIN or CUSTOMER
+        UserType userTypeEnum = requestDto.toUserTypeEnum();
+        if (userTypeEnum == null) {
+            throw new BusinessException("validation.userType.invalid",
+                    List.of(FieldErrorDto.builder()
+                            .field("userType")
+                            .message("validation.userType.invalid")
+                            .rejectedValue(requestDto.getUserType())
+                            .code("INVALID_ENUM")
+                            .build()));
         }
+
+        // Proceed to transactional part only after all validations pass
+        return doCreateUser(requestDto, userTypeEnum);
+    }
+
+    @Transactional
+    protected ResponseDto<UserEntity> doCreateUser(UserRequestDto requestDto, UserType userTypeEnum) {
 
         // 5) Map DTO → Entity
         UserEntity userEntity = UserMapper.toEntity(requestDto);
@@ -53,6 +100,7 @@ public class UserServiceImpl implements IUserInterface {
         // 6) Password encryption
         String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
         userEntity.setPassword(encodedPassword);
+        userEntity.setUserType(userTypeEnum);
 
         // 7) Save entity
         UserEntity savedUser = userRepository.save(userEntity);

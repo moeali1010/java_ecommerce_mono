@@ -14,12 +14,12 @@ public class UserMapper {
 
         // استخدام Factory method الموجود في UserEntity
         return UserEntity.create(
-                dto.getName(),
-                dto.getUserName(),
-                dto.getPassword(),
-                dto.getEmail(),
-                dto.getMobileNumber(),
-                dto.getUserType());
+            dto.getName(),
+            dto.getUserName(),
+            dto.getPassword(),
+            dto.getEmail(),
+            dto.getMobileNumber(),
+            dto.toUserTypeEnum());
     }
 
     public static UserResponseDto toUserResponseDto(UserEntity user) {

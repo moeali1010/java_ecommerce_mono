@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -60,4 +60,4 @@ management:
 logging:
   level:
     org.springframework: INFO
-    com.users: DEBUG
+    com.ejadit: DEBUG
