@@ -1,135 +1,127 @@
-package com.ejadit.ecommerce.productCategory.service.impl;
-
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+package com.ejadit.ecommerce.productcategory.service.impl;
 
 import com.ejadit.ecommerce.common.dto.FieldErrorDto;
 import com.ejadit.ecommerce.common.dto.ResponseDto;
 import com.ejadit.ecommerce.common.exception.BusinessException;
-import com.ejadit.ecommerce.productCategory.dto.ProductCategoryRequestDto;
-import com.ejadit.ecommerce.productCategory.entity.ProductCategory;
-import com.ejadit.ecommerce.productCategory.mapper.ProductCategoryMapper;
-import com.ejadit.ecommerce.productCategory.repository.ProductCategoryRepository;
-import com.ejadit.ecommerce.productCategory.service.IProductCategoryService;
+import com.ejadit.ecommerce.productcategory.dto.ProductCategoryRequestDto;
+import com.ejadit.ecommerce.productcategory.entity.ProductCategory;
+import com.ejadit.ecommerce.productcategory.mapper.ProductCategoryMapper;
+import com.ejadit.ecommerce.productcategory.repository.ProductCategoryRepository;
+import com.ejadit.ecommerce.productcategory.service.IProductCategoryService;
+import java.util.List;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductCategoryServiceImpl implements IProductCategoryService {
 
-    private final ProductCategoryRepository categoryRepository;
+    private final ProductCategoryRepository repository;
 
-    public ProductCategoryServiceImpl(ProductCategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    public ProductCategoryServiceImpl(ProductCategoryRepository repository) {
+        this.repository = repository;
     }
 
+    // ================== CREATE ==================
     @Override
     @Transactional
     public ResponseDto<ProductCategory> createCategory(ProductCategoryRequestDto requestDto) {
-        // 1) Validate category name is not empty
-        if (requestDto.getCategoryName() == null || requestDto.getCategoryName().trim().isEmpty()) {
-            throw new BusinessException("validation.categoryName.required",
-                    List.of(FieldErrorDto.builder()
-                            .field("categoryName")
-                            .message("validation.categoryName.required")
-                            .rejectedValue(null)
-                            .code("NOT_BLANK")
-                            .build()));
-        }
 
-        // 2) Check if category name already exists
-        if (categoryRepository.existsByCategoryName(requestDto.getCategoryName())) {
+        // ------------------- Unique name validation -------------------
+        if (repository.existsByCategoryNameIgnoreCase(requestDto.getCategoryName())) {
             throw new BusinessException("category.name.exists",
-                    List.of(FieldErrorDto.builder()
-                            .field("categoryName")
-                            .message("category.name.exists")
-                            .rejectedValue(requestDto.getCategoryName())
-                            .code("ALREADY_EXISTS")
-                            .build()));
+                List.of(FieldErrorDto.builder()
+                    .field("categoryName")
+                    .message("category.name.exists")
+                    .rejectedValue(requestDto.getCategoryName())
+                    .code("UNIQUE_CONSTRAINT")
+                    .build()));
         }
 
-        // 3) Map DTO → Entity
-        ProductCategory category = ProductCategoryMapper.toEntity(requestDto);
+        // ------------------- Create entity using Domain factory -------------------
+        ProductCategory entity = ProductCategory.create(
+                requestDto.getCategoryName(),
+                requestDto.getDescription()
+        );
 
-        // 4) Save entity
-        ProductCategory savedCategory = categoryRepository.save(category);
+        // ------------------- Save -------------------
+        ProductCategory saved = repository.save(entity);
 
-        // 5) Return standardized response
-        return ProductCategoryMapper.toResponse(savedCategory);
+        return ProductCategoryMapper.toResponse(saved);
     }
 
+    // ================== GET BY ID ==================
     @Override
     public ResponseDto<ProductCategory> getCategoryById(Long categoryId) {
-        // Validate categoryId
-        if (categoryId == null || categoryId <= 0) {
-            throw new BusinessException("validation.categoryId.invalid",
-                    List.of(FieldErrorDto.builder()
-                            .field("categoryId")
-                            .message("validation.categoryId.invalid")
-                            .rejectedValue(categoryId != null ? categoryId.toString() : "null")
-                            .code("INVALID_ID")
-                            .build()));
-        }
 
-        // Find category by id
-        ProductCategory category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new BusinessException("category.not.found",
-                        List.of(FieldErrorDto.builder()
-                                .field("categoryId")
-                                .message("category.not.found")
-                                .rejectedValue(categoryId.toString())
-                                .code("NOT_FOUND")
-                                .build())));
+        validateCategoryId(categoryId);
 
-        // Return standardized response
+        ProductCategory category = repository.findById(categoryId)
+            .orElseThrow(() -> new BusinessException("category.not.found",
+                List.of(FieldErrorDto.builder()
+                    .field("categoryId")
+                    .message("category.not.found")
+                    .rejectedValue(String.valueOf(categoryId))
+                    .code("NOT_FOUND")
+                    .build())));
+
         return ProductCategoryMapper.toResponse(category);
     }
 
+    // ================== LIST ==================
+    @Override
+    public ResponseDto<List<ProductCategory>> listCategories() {
+        List<ProductCategory> all = repository.findAll();
+        return new ResponseDto<>("200", "Success", all);
+    }
+
+    // ================== UPDATE ==================
     @Override
     @Transactional
     public ResponseDto<ProductCategory> updateCategory(Long categoryId, ProductCategoryRequestDto requestDto) {
-        // Validate categoryId
-        if (categoryId == null || categoryId <= 0) {
-            throw new BusinessException("validation.categoryId.invalid",
-                    List.of(FieldErrorDto.builder()
-                            .field("categoryId")
-                            .message("validation.categoryId.invalid")
-                            .rejectedValue(categoryId != null ? categoryId.toString() : "null")
-                            .code("INVALID_ID")
-                            .build()));
-        }
 
-        // Find existing category
-        ProductCategory existingCategory = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new BusinessException("category.not.found",
-                        List.of(FieldErrorDto.builder()
-                                .field("categoryId")
-                                .message("category.not.found")
-                                .rejectedValue(categoryId.toString())
-                                .code("NOT_FOUND")
-                                .build())));
+        validateCategoryId(categoryId);
 
-        // Validate category name uniqueness (only if changed)
-        if (!existingCategory.getCategoryName().equals(requestDto.getCategoryName())) {
-            if (categoryRepository.existsByCategoryName(requestDto.getCategoryName())) {
+        ProductCategory existing = repository.findById(categoryId)
+            .orElseThrow(() -> new BusinessException("category.not.found",
+                List.of(FieldErrorDto.builder()
+                    .field("categoryId")
+                    .message("category.not.found")
+                    .rejectedValue(String.valueOf(categoryId))
+                    .code("NOT_FOUND")
+                    .build())));
+
+        // ------------------- Unique name check only if changed -------------------
+        String newName = requestDto.getCategoryName();
+        if (newName != null && !newName.equalsIgnoreCase(existing.getCategoryName())) {
+            if (repository.existsByCategoryNameIgnoreCase(newName)) {
                 throw new BusinessException("category.name.exists",
-                        List.of(FieldErrorDto.builder()
-                                .field("categoryName")
-                                .message("category.name.exists")
-                                .rejectedValue(requestDto.getCategoryName())
-                                .code("ALREADY_EXISTS")
-                                .build()));
+                    List.of(FieldErrorDto.builder()
+                        .field("categoryName")
+                        .message("category.name.exists")
+                        .rejectedValue(newName)
+                        .code("UNIQUE_CONSTRAINT")
+                        .build()));
             }
         }
 
-        // Update category fields
-        existingCategory.setCategoryName(requestDto.getCategoryName());
-        existingCategory.setDescription(requestDto.getDescription());
+        // ------------------- Apply domain update -------------------
+        existing.update(newName, requestDto.getDescription());
 
-        // Save updated category
-        ProductCategory updatedCategory = categoryRepository.save(existingCategory);
+        ProductCategory saved = repository.save(existing);
 
-        // Return standardized response
-        return ProductCategoryMapper.toResponse(updatedCategory);
+        return ProductCategoryMapper.toResponse(saved);
+    }
+
+    // ================== PRIVATE VALIDATION ==================
+    private void validateCategoryId(Long categoryId) {
+        if (categoryId == null || categoryId <= 0) {
+            throw new BusinessException("validation.categoryId.invalid",
+                List.of(FieldErrorDto.builder()
+                    .field("categoryId")
+                    .message("validation.categoryId.invalid")
+                    .rejectedValue(String.valueOf(categoryId))
+                    .code("INVALID_ID")
+                    .build()));
+        }
     }
 }

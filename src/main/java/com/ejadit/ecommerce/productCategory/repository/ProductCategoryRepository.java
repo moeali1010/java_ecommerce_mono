@@ -1,15 +1,13 @@
-package com.ejadit.ecommerce.productCategory.repository;
+package com.ejadit.ecommerce.productcategory.repository;
 
-import java.util.Optional;
-
+import com.ejadit.ecommerce.productcategory.entity.ProductCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.ejadit.ecommerce.productCategory.entity.ProductCategory;
+import java.util.Optional;
 
 @Repository
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, Long> {
-    Optional<ProductCategory> findByCategoryName(String categoryName);
-
-    boolean existsByCategoryName(String categoryName);
+    boolean existsByCategoryNameIgnoreCase(String categoryName);
+    Optional<ProductCategory> findByCategoryNameIgnoreCase(String categoryName);
 }

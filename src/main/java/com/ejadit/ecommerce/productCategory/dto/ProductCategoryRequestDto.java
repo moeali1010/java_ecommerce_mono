@@ -1,9 +1,9 @@
-package com.ejadit.ecommerce.productCategory.dto;
+package com.ejadit.ecommerce.productcategory.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -20,6 +20,7 @@ public class ProductCategoryRequestDto {
     }
 
     @NotBlank(message = "{validation.categoryName.required}")
+    @Size(max = 255, message = "{validation.categoryName.length}")
     private final String categoryName;
 
     private final String description;

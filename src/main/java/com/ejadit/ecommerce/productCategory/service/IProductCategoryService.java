@@ -1,16 +1,13 @@
-package com.ejadit.ecommerce.productCategory.service;
+package com.ejadit.ecommerce.productcategory.service;
 
 import com.ejadit.ecommerce.common.dto.ResponseDto;
-import com.ejadit.ecommerce.productCategory.dto.ProductCategoryRequestDto;
-import com.ejadit.ecommerce.productCategory.entity.ProductCategory;
+import com.ejadit.ecommerce.productcategory.dto.ProductCategoryRequestDto;
+import com.ejadit.ecommerce.productcategory.entity.ProductCategory;
+import java.util.List;
 
 public interface IProductCategoryService {
-    // Create category
     ResponseDto<ProductCategory> createCategory(ProductCategoryRequestDto requestDto);
-
-    // Get category by id
     ResponseDto<ProductCategory> getCategoryById(Long categoryId);
-
-    // Update category
+    ResponseDto<List<ProductCategory>> listCategories();
     ResponseDto<ProductCategory> updateCategory(Long categoryId, ProductCategoryRequestDto requestDto);
 }

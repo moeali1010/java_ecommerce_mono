@@ -1,4 +1,4 @@
-package com.ejadit.ecommerce.productCategory.dto;
+package com.ejadit.ecommerce.productcategory.dto;
 
 import lombok.Builder;
 import lombok.Getter;
