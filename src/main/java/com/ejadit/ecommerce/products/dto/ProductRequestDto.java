@@ -1,7 +1,5 @@
 package com.ejadit.ecommerce.products.dto;
 
-import org.hibernate.validator.constraints.UniqueElements;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
@@ -36,7 +34,6 @@ public class ProductRequestDto {
 
     @NotBlank(message = "{validation.productName.required}")
     @Size(max = 255, message = "{validation.productName.length}")
-    @UniqueElements(message = "{validation.productName.unique}")
     private final String productName;
 
     private final String productDescription;

@@ -1,34 +1,28 @@
 package com.ejadit.ecommerce.products.entity;
 
-import com.ejadit.ecommerce.common.entity.BaseEntity;
 import com.ejadit.ecommerce.common.dto.FieldErrorDto;
+import com.ejadit.ecommerce.common.entity.BaseEntity;
 import com.ejadit.ecommerce.common.exception.BusinessException;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import com.ejadit.ecommerce.productcategory.entity.ProductCategory;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 
 @Entity
 @Table(
-    name = "products",
-    indexes = {
-        @Index(name = "idx_product_name", columnList = "product_name"),
-        @Index(name = "idx_category_id", columnList = "category_id")
-    }
+        name = "products",
+        indexes = {
+                @Index(name = "idx_product_name", columnList = "product_name"),
+                @Index(name = "idx_category_fk", columnList = "category_id")
+        }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @EqualsAndHashCode(of = "productId")
-@ToString
+@ToString(exclude = "category")
 public class ProductEntity extends BaseEntity {
 
     @Id
@@ -36,17 +30,20 @@ public class ProductEntity extends BaseEntity {
     @Column(name = "product_id")
     private Long productId;
 
-    @Column(name = "category_id", nullable = false)
-    private Long categoryId;
+    // ================== RELATION ==================
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private ProductCategory category;
 
+    // ================== FIELDS ==================
     @Column(name = "product_name", nullable = false, length = 255)
     private String productName;
 
     @Column(name = "product_description", columnDefinition = "TEXT")
     private String productDescription;
 
-    @Column(name = "price", nullable = false)
-    private Double price;
+    @Column(name = "price", nullable = false, precision = 18, scale = 4)
+    private BigDecimal price;
 
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
@@ -56,27 +53,31 @@ public class ProductEntity extends BaseEntity {
     private Long version;
 
     // ================== Factory Method ==================
-    public static ProductEntity create(Long categoryId,
+    public static ProductEntity create(ProductCategory category,
                                        String productName,
                                        String productDescription,
-                                       Double price,
+                                       BigDecimal price,
                                        Integer stockQuantity) {
+
         ProductEntity product = new ProductEntity();
-        product.categoryId = validateCategoryId(categoryId);
+
+        product.category = validateCategory(category);
         product.productName = validateProductName(productName);
         product.productDescription = trimDescription(productDescription);
         product.price = validatePrice(price);
         product.stockQuantity = validateStockQuantity(stockQuantity);
+
         return product;
     }
 
     // ================== Update Method ==================
-    public void update(Long categoryId,
+    public void update(ProductCategory category,
                        String productName,
                        String productDescription,
-                       Double price,
+                       BigDecimal price,
                        Integer stockQuantity) {
-        this.categoryId = validateCategoryId(categoryId);
+
+        this.category = validateCategory(category);
         this.productName = validateProductName(productName);
         this.productDescription = trimDescription(productDescription);
         this.price = validatePrice(price);
@@ -89,37 +90,38 @@ public class ProductEntity extends BaseEntity {
     }
 
     // ================== Validation Methods ==================
-    private static Long validateCategoryId(Long categoryId) {
-        if (categoryId == null || categoryId <= 0) {
-            throw new BusinessException("validation.categoryId.invalid",
-                java.util.List.of(FieldErrorDto.builder()
-                    .field("categoryId")
-                    .message("validation.categoryId.invalid")
-                    .rejectedValue(categoryId != null ? categoryId.toString() : null)
-                    .code("INVALID_ID")
-                    .build()));
+
+    private static ProductCategory validateCategory(ProductCategory category) {
+        if (category == null) {
+            throw new BusinessException("validation.category.required",
+                    List.of(FieldErrorDto.builder()
+                            .field("category")
+                            .message("validation.category.required")
+                            .rejectedValue(null)
+                            .code("NOT_NULL")
+                            .build()));
         }
-        return categoryId;
+        return category;
     }
 
     private static String validateProductName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new BusinessException("validation.productName.required",
-                java.util.List.of(FieldErrorDto.builder()
-                    .field("productName")
-                    .message("validation.productName.required")
-                    .rejectedValue(null)
-                    .code("NOT_BLANK")
-                    .build()));
+                    List.of(FieldErrorDto.builder()
+                            .field("productName")
+                            .message("validation.productName.required")
+                            .rejectedValue(null)
+                            .code("NOT_BLANK")
+                            .build()));
         }
         if (name.length() > 255) {
             throw new BusinessException("validation.productName.length",
-                java.util.List.of(FieldErrorDto.builder()
-                    .field("productName")
-                    .message("validation.productName.length")
-                    .rejectedValue(name)
-                    .code("SIZE_EXCEEDED")
-                    .build()));
+                    List.of(FieldErrorDto.builder()
+                            .field("productName")
+                            .message("validation.productName.length")
+                            .rejectedValue(name)
+                            .code("SIZE_EXCEEDED")
+                            .build()));
         }
         return name.trim();
     }
@@ -128,24 +130,24 @@ public class ProductEntity extends BaseEntity {
         return description != null ? description.trim() : null;
     }
 
-    private static Double validatePrice(Double price) {
+    private static BigDecimal validatePrice(BigDecimal price) {
         if (price == null) {
             throw new BusinessException("validation.price.required",
-                java.util.List.of(FieldErrorDto.builder()
-                    .field("price")
-                    .message("validation.price.required")
-                    .rejectedValue(null)
-                    .code("NOT_NULL")
-                    .build()));
+                    List.of(FieldErrorDto.builder()
+                            .field("price")
+                            .message("validation.price.required")
+                            .rejectedValue(null)
+                            .code("NOT_NULL")
+                            .build()));
         }
-        if (price <= 0) {
+        if (price.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("validation.price.positive",
-                java.util.List.of(FieldErrorDto.builder()
-                    .field("price")
-                    .message("validation.price.positive")
-                    .rejectedValue(price.toString())
-                    .code("MUST_BE_POSITIVE")
-                    .build()));
+                    List.of(FieldErrorDto.builder()
+                            .field("price")
+                            .message("validation.price.positive")
+                            .rejectedValue(price.toString())
+                            .code("MUST_BE_POSITIVE")
+                            .build()));
         }
         return price;
     }
@@ -153,21 +155,21 @@ public class ProductEntity extends BaseEntity {
     private static Integer validateStockQuantity(Integer stockQuantity) {
         if (stockQuantity == null) {
             throw new BusinessException("validation.stockQuantity.required",
-                java.util.List.of(FieldErrorDto.builder()
-                    .field("stockQuantity")
-                    .message("validation.stockQuantity.required")
-                    .rejectedValue(null)
-                    .code("NOT_NULL")
-                    .build()));
+                    List.of(FieldErrorDto.builder()
+                            .field("stockQuantity")
+                            .message("validation.stockQuantity.required")
+                            .rejectedValue(null)
+                            .code("NOT_NULL")
+                            .build()));
         }
         if (stockQuantity < 0) {
             throw new BusinessException("validation.stockQuantity.positive",
-                java.util.List.of(FieldErrorDto.builder()
-                    .field("stockQuantity")
-                    .message("validation.stockQuantity.positive")
-                    .rejectedValue(stockQuantity.toString())
-                    .code("MUST_BE_POSITIVE_OR_ZERO")
-                    .build()));
+                    List.of(FieldErrorDto.builder()
+                            .field("stockQuantity")
+                            .message("validation.stockQuantity.positive")
+                            .rejectedValue(stockQuantity.toString())
+                            .code("MUST_BE_POSITIVE_OR_ZERO")
+                            .build()));
         }
         return stockQuantity;
     }
