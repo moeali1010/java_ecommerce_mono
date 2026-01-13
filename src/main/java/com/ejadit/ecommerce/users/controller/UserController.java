@@ -8,8 +8,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +20,8 @@ import static com.ejadit.ecommerce.users.mapper.UserMapper.toUserResponseDto;
 @RestController
 @RequestMapping("/api/v1/users")
 @Validated
-@Tag(name = "Users", description = "User management endpoints")
+@Tag(name = "Users", description = "User management endpoints - Requires Authentication")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final IUserInterface userService;
@@ -28,9 +31,10 @@ public class UserController {
     }
 
     @PostMapping("")
+    @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Create a new user",
-            description = "Creates a new user with the provided information. Supports internationalization via Accept-Language header.\n\nSupported Languages:\n- 'ar' for Arabic (العربية)\n- 'en' for English"
+            description = "Creates a new user with the provided information. Requires authentication. Supports internationalization via Accept-Language header.\n\nSupported Languages:\n- 'ar' for Arabic (العربية)\n- 'en' for English"
     )
     @ApiResponse(
             responseCode = "201",
@@ -43,6 +47,10 @@ public class UserController {
     @ApiResponse(
             responseCode = "400",
             description = "Validation failed or business rule violation"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized - Authentication required"
     )
     public ResponseEntity<UserResponseDto> createUser(
             @RequestBody @Validated UserRequestDto userRequestDto,
@@ -64,9 +72,10 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Get user by ID",
-            description = "Retrieves a user by their unique ID. Supports internationalization via Accept-Language header.\n\nSupported Languages:\n- 'ar' for Arabic (العربية)\n- 'en' for English"
+            description = "Retrieves a user by their unique ID. Requires authentication. Supports internationalization via Accept-Language header.\n\nSupported Languages:\n- 'ar' for Arabic (العربية)\n- 'en' for English"
     )
     @ApiResponse(
             responseCode = "200",
@@ -83,6 +92,10 @@ public class UserController {
     @ApiResponse(
             responseCode = "400",
             description = "Invalid user ID"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized - Authentication required"
     )
     public ResponseEntity<UserResponseDto> getUserById(
             @PathVariable Long userId,
@@ -103,9 +116,10 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "Update user",
-            description = "Updates an existing user with the provided information. Supports internationalization via Accept-Language header.\n\nSupported Languages:\n- 'ar' for Arabic (العربية)\n- 'en' for English"
+            description = "Updates an existing user with the provided information. Requires authentication. Supports internationalization via Accept-Language header.\n\nSupported Languages:\n- 'ar' for Arabic (العربية)\n- 'en' for English"
     )
     @ApiResponse(
             responseCode = "200",
@@ -122,6 +136,10 @@ public class UserController {
     @ApiResponse(
             responseCode = "400",
             description = "Validation failed or business rule violation"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized - Authentication required"
     )
     public ResponseEntity<UserResponseDto> updateUser(
             @PathVariable Long userId,

@@ -15,11 +15,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -112,10 +114,13 @@ public class AuthController {
     // ================= VALIDATE TOKEN =================
 
     @GetMapping("/validate-token")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Validate authentication token", description = "Check if provided token is valid and not expired")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Token validation result",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<ResponseDto<Boolean>> validateToken(
@@ -130,10 +135,13 @@ public class AuthController {
     // ================= LOGOUT =================
 
     @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Logout user", description = "Revoke authentication token and logout user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Logout successful",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
             @ApiResponse(responseCode = "404", description = "Token not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -149,11 +157,13 @@ public class AuthController {
     // ================= REFRESH TOKEN =================
 
     @PostMapping("/refresh-token")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Refresh access token", description = "Generate new access token using refresh token")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Token refreshed successfully",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDto.class))),
-            @ApiResponse(responseCode = "401", description = "Invalid refresh token"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or expired refresh token"),
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })

@@ -9,16 +9,19 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/product-categories")
 @Validated
-@Tag(name = "Product Categories", description = "Product category management endpoints")
+@Tag(name = "Product Categories", description = "Product category management endpoints - Requires Authentication")
+@SecurityRequirement(name = "bearerAuth")
 public class ProductCategoryController {
 
     private final IProductCategoryService service;
@@ -28,28 +31,34 @@ public class ProductCategoryController {
     }
 
     @PostMapping("")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Create a new product category")
     @ApiResponse(responseCode = "201", description = "Category created successfully",
         content = @Content(mediaType = "application/json",
             schema = @Schema(implementation = ProductCategoryResponseDto.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required")
     public ResponseEntity<ProductCategoryResponseDto> create(@RequestBody @Validated ProductCategoryRequestDto request) {
         ProductCategory saved = service.createCategory(request).getData();
         return ResponseEntity.status(201).body(ProductCategoryMapper.toResponseDto(saved));
     }
 
     @GetMapping("/{categoryId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get category by ID")
     @ApiResponse(responseCode = "200", description = "Category retrieved successfully",
         content = @Content(mediaType = "application/json",
             schema = @Schema(implementation = ProductCategoryResponseDto.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required")
     public ResponseEntity<ProductCategoryResponseDto> getById(@PathVariable Long categoryId) {
         ProductCategory category = service.getCategoryById(categoryId).getData();
         return ResponseEntity.ok(ProductCategoryMapper.toResponseDto(category));
     }
 
     @GetMapping("")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List all categories")
     @ApiResponse(responseCode = "200", description = "Categories listed successfully")
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required")
     public ResponseEntity<List<ProductCategoryResponseDto>> list() {
         List<ProductCategory> categories = service.listCategories().getData();
         List<ProductCategoryResponseDto> body = categories.stream()
@@ -59,10 +68,12 @@ public class ProductCategoryController {
     }
 
     @PutMapping("/{categoryId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update product category")
     @ApiResponse(responseCode = "200", description = "Category updated successfully",
         content = @Content(mediaType = "application/json",
             schema = @Schema(implementation = ProductCategoryResponseDto.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required")
     public ResponseEntity<ProductCategoryResponseDto> update(@PathVariable Long categoryId,
             @RequestBody @Validated ProductCategoryRequestDto request) {
         ProductCategory updated = service.updateCategory(categoryId, request).getData();
