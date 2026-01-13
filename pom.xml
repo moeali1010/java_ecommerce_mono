@@ -103,6 +103,12 @@
             <version>2.8.0</version>
         </dependency>
 
+        <!-- ================= AOP for Logging ================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!-- ================== TEST DEPENDENCIES ================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
