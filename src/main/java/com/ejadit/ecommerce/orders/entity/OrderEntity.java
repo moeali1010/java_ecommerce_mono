@@ -10,6 +10,20 @@ import lombok.*;
 
 import java.util.List;
 
+/**
+ * Order entity for managing customer orders.
+ * 
+ * <p>This entity follows the rich domain model pattern with:
+ * <ul>
+ *   <li>No public setters - state changes only through domain methods</li>
+ *   <li>Factory method for controlled creation</li>
+ *   <li>update() method for complete order updates</li>
+ *   <li>updateQuantity() method for quantity-only updates</li>
+ *   <li>Encapsulated validation logic with business exceptions</li>
+ *   <li>Optimistic locking with @Version</li>
+ *   <li>Lazy-loaded relationships (customer, product)</li>
+ * </ul>
+ */
 @Entity
 @Table(
         name = "orders",
@@ -46,7 +60,17 @@ public class OrderEntity extends BaseEntity {
     @Column(name = "version")
     private Long version;
 
-    // ================== Factory Method ==================
+    // ================= FACTORY METHOD =================
+
+    /**
+     * Creates a new order with validation.
+     * 
+     * @param customer the customer placing the order
+     * @param product the product being ordered
+     * @param quantity the order quantity
+     * @return a new OrderEntity instance
+     * @throws BusinessException if any validation fails
+     */
     public static OrderEntity create(UserEntity customer,
                                      ProductEntity product,
                                      Integer quantity) {
@@ -60,7 +84,16 @@ public class OrderEntity extends BaseEntity {
         return order;
     }
 
-    // ================== Update Method ==================
+    // ================= DOMAIN UPDATE METHODS =================
+
+    /**
+     * Updates all order fields with validation.
+     * 
+     * @param customer the new customer
+     * @param product the new product
+     * @param quantity the new quantity
+     * @throws BusinessException if any validation fails
+     */
     public void update(UserEntity customer,
                        ProductEntity product,
                        Integer quantity) {
@@ -70,7 +103,12 @@ public class OrderEntity extends BaseEntity {
         this.quantity = validateQuantity(quantity);
     }
 
-    // ================== Update quantity only ==================
+    /**
+     * Updates only the order quantity.
+     * 
+     * @param quantity the new quantity
+     * @throws BusinessException if validation fails
+     */
     public void updateQuantity(Integer quantity) {
         this.quantity = validateQuantity(quantity);
     }

@@ -13,6 +13,18 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Password reset entity for managing password reset requests.
+ * 
+ * <p>This entity follows the rich domain model pattern with:
+ * <ul>
+ *   <li>No public setters - state changes only through domain methods</li>
+ *   <li>Factory method for controlled creation</li>
+ *   <li>Domain-specific methods for business operations (use, revoke)</li>
+ *   <li>Encapsulated validation logic</li>
+ *   <li>State management through ResetStatus enum</li>
+ * </ul>
+ */
 @Entity
 @Table(name = "password_resets")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -48,21 +60,31 @@ public class PasswordReset {
 
     // ================= FACTORY METHOD =================
 
+    /**
+     * Creates a new password reset request with validation.
+     * 
+     * @param userId the user ID requesting password reset
+     * @param email the user's email address
+     * @param token the reset token
+     * @param expiresAt when this reset request expires
+     * @return a new PasswordReset instance
+     * @throws IllegalArgumentException if any validation fails
+     */
     public static PasswordReset create(Long userId, String email, String token, LocalDateTime expiresAt) {
         if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("User ID must be valid");
+            throw new IllegalArgumentException("validation.userId.required");
         }
 
         if (email == null || email.trim().isEmpty()) {
-            throw new IllegalArgumentException("Email cannot be empty");
+            throw new IllegalArgumentException("validation.email.empty");
         }
 
         if (token == null || token.trim().isEmpty()) {
-            throw new IllegalArgumentException("Token cannot be empty");
+            throw new IllegalArgumentException("validation.token.empty");
         }
 
         if (expiresAt == null || expiresAt.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Expiration time must be in the future");
+            throw new IllegalArgumentException("validation.expiration.past");
         }
 
         PasswordReset reset = new PasswordReset();
@@ -78,27 +100,45 @@ public class PasswordReset {
 
     // ================= DOMAIN BEHAVIOR =================
 
+    /**
+     * Marks this password reset as used.
+     * 
+     * @throws IllegalArgumentException if the token is expired or already used
+     */
     public void use() {
         if (isExpired()) {
-            throw new IllegalArgumentException("Password reset token has expired");
+            throw new IllegalArgumentException("validation.token.expired");
         }
 
         if (!status.equals(ResetStatus.PENDING)) {
-            throw new IllegalArgumentException("Password reset token is already used");
+            throw new IllegalArgumentException("validation.token.used");
         }
 
         this.status = ResetStatus.USED;
         this.usedAt = LocalDateTime.now();
     }
 
+    /**
+     * Revokes this password reset request, making it invalid.
+     */
     public void revoke() {
         this.status = ResetStatus.REVOKED;
     }
 
+    /**
+     * Checks if this password reset request is valid (pending and not expired).
+     * 
+     * @return true if the request can be used to reset a password
+     */
     public boolean isValid() {
         return status.equals(ResetStatus.PENDING) && !isExpired();
     }
 
+    /**
+     * Checks if this password reset request has expired.
+     * 
+     * @return true if the current time is past the expiration time
+     */
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);
     }

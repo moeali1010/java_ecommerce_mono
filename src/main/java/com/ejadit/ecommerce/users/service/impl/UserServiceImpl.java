@@ -108,9 +108,9 @@ public class UserServiceImpl implements IUserInterface {
 
         // 6) Password encryption
         String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
-        userEntity.setPassword(encodedPassword);
-        userEntity.setUserType(userTypeEnum);
-        userEntity.setUserStatus(userStatusEnum);
+        userEntity.updatePassword(encodedPassword);
+        userEntity.changeUserType(userTypeEnum);
+        userEntity.changeStatus(userStatusEnum);
 
         // 7) Save entity
         UserEntity savedUser = userRepository.save(userEntity);
@@ -215,14 +215,14 @@ public class UserServiceImpl implements IUserInterface {
                                 .code("INVALID_ENUM")
                                 .build()));
             }
-            existingUser.setUserStatus(userStatusEnum);
+            existingUser.changeStatus(userStatusEnum);
         }
 
         // Update user fields
-        existingUser.setUserName(requestDto.getUserName());
-        existingUser.setEmail(requestDto.getEmail());
-        existingUser.setMobileNumber(requestDto.getMobileNumber());
-        existingUser.setUserType(userTypeEnum);
+        existingUser.changeUserName(requestDto.getUserName());
+        existingUser.changeEmail(requestDto.getEmail());
+        existingUser.updateMobileNumber(requestDto.getMobileNumber());
+        existingUser.changeUserType(userTypeEnum);
        
 
         // Update password only if provided
@@ -250,7 +250,7 @@ public class UserServiceImpl implements IUserInterface {
 
             // Encode and update password
             String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
-            existingUser.setPassword(encodedPassword);
+            existingUser.updatePassword(encodedPassword);
         }
 
         // Save updated user

@@ -10,7 +10,20 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-
+/**
+ * Product entity for managing product information.
+ * 
+ * <p>This entity follows the rich domain model pattern with:
+ * <ul>
+ *   <li>No public setters - state changes only through domain methods</li>
+ *   <li>Factory method for controlled creation</li>
+ *   <li>update() method for complete product updates</li>
+ *   <li>updateStock() method for stock-only updates</li>
+ *   <li>Encapsulated validation logic with business exceptions</li>
+ *   <li>Optimistic locking with @Version</li>
+ *   <li>Lazy-loaded category relationship</li>
+ * </ul>
+ */
 @Entity
 @Table(
         name = "products",
@@ -52,7 +65,19 @@ public class ProductEntity extends BaseEntity {
     @Column(name = "version")
     private Long version;
 
-    // ================== Factory Method ==================
+    // ================= FACTORY METHOD =================
+
+    /**
+     * Creates a new product with validation.
+     * 
+     * @param category the product category
+     * @param productName the product name
+     * @param productDescription the product description
+     * @param price the product price
+     * @param stockQuantity the initial stock quantity
+     * @return a new ProductEntity instance
+     * @throws BusinessException if any validation fails
+     */
     public static ProductEntity create(ProductCategory category,
                                        String productName,
                                        String productDescription,
@@ -70,7 +95,18 @@ public class ProductEntity extends BaseEntity {
         return product;
     }
 
-    // ================== Update Method ==================
+    // ================= DOMAIN UPDATE METHODS =================
+
+    /**
+     * Updates all product fields with validation.
+     * 
+     * @param category the new product category
+     * @param productName the new product name
+     * @param productDescription the new product description
+     * @param price the new product price
+     * @param stockQuantity the new stock quantity
+     * @throws BusinessException if any validation fails
+     */
     public void update(ProductCategory category,
                        String productName,
                        String productDescription,
@@ -84,7 +120,12 @@ public class ProductEntity extends BaseEntity {
         this.stockQuantity = validateStockQuantity(stockQuantity);
     }
 
-    // ================== Update stock only ==================
+    /**
+     * Updates only the stock quantity.
+     * 
+     * @param stockQuantity the new stock quantity
+     * @throws BusinessException if validation fails
+     */
     public void updateStock(Integer stockQuantity) {
         this.stockQuantity = validateStockQuantity(stockQuantity);
     }

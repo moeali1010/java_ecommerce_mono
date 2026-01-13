@@ -234,7 +234,7 @@ public class AuthServiceImpl implements IAuthService {
                                 .build())));
 
         reset.use();
-        user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
+        user.updatePassword(passwordEncoder.encode(requestDto.getNewPassword()));
         userRepository.save(user);
         passwordResetRepository.save(reset);
 
@@ -256,7 +256,7 @@ public class AuthServiceImpl implements IAuthService {
 
             return ResponseDto.<Boolean>builder()
                     .statusCode("200")
-                    .statusMessage("Token validation completed")
+                    .statusMessage("auth.token.validation.success")
                     .data(isValid)
                     .build();
 
@@ -264,7 +264,7 @@ public class AuthServiceImpl implements IAuthService {
             log.error("Error validating token", e);
             return ResponseDto.<Boolean>builder()
                     .statusCode("400")
-                    .statusMessage("Token validation failed")
+                    .statusMessage("auth.token.validation.failed")
                     .data(false)
                     .build();
         }

@@ -13,6 +13,17 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Authentication token entity for managing user authentication tokens.
+ * 
+ * <p>This entity follows the rich domain model pattern with:
+ * <ul>
+ *   <li>No public setters - state changes only through domain methods</li>
+ *   <li>Factory method for controlled creation</li>
+ *   <li>Domain-specific methods for business operations</li>
+ *   <li>Encapsulated validation logic</li>
+ * </ul>
+ */
 @Entity
 @Table(name = "authentication_tokens")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -45,25 +56,35 @@ public class AuthenticationToken {
 
     // ================= FACTORY METHOD =================
 
+    /**
+     * Creates a new authentication token with validation.
+     * 
+     * @param userId the user ID this token belongs to
+     * @param token the token string
+     * @param tokenType the type of token (ACCESS, REFRESH, etc.)
+     * @param expiresAt when this token expires
+     * @return a new AuthenticationToken instance
+     * @throws IllegalArgumentException if any validation fails
+     */
     public static AuthenticationToken create(Long userId, String token, TokenType tokenType, LocalDateTime expiresAt) {
         if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("User ID must be valid");
+            throw new IllegalArgumentException("validation.userId.required");
         }
 
         if (token == null || token.trim().isEmpty()) {
-            throw new IllegalArgumentException("Token cannot be empty");
+            throw new IllegalArgumentException("validation.token.empty");
         }
 
         if (tokenType == null) {
-            throw new IllegalArgumentException("Token type is required");
+            throw new IllegalArgumentException("validation.token.type.required");
         }
 
         if (expiresAt == null) {
-            throw new IllegalArgumentException("Expiration time is required");
+            throw new IllegalArgumentException("validation.expiration.required");
         }
 
         if (expiresAt.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Token expiration must be in the future");
+            throw new IllegalArgumentException("validation.expiration.future");
         }
 
         AuthenticationToken authToken = new AuthenticationToken();
@@ -79,14 +100,27 @@ public class AuthenticationToken {
 
     // ================= DOMAIN BEHAVIOR =================
 
+    /**
+     * Revokes this authentication token, making it invalid.
+     */
     public void revoke() {
         this.isRevoked = true;
     }
 
+    /**
+     * Checks if this token is valid (not revoked and not expired).
+     * 
+     * @return true if the token can be used for authentication
+     */
     public boolean isValid() {
         return !isRevoked && LocalDateTime.now().isBefore(expiresAt);
     }
 
+    /**
+     * Checks if this token has expired.
+     * 
+     * @return true if the current time is past the expiration time
+     */
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);
     }

@@ -19,6 +19,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+/**
+ * Product category entity for managing product categorization.
+ * 
+ * <p>This entity follows the rich domain model pattern with:
+ * <ul>
+ *   <li>No public setters - state changes only through domain methods</li>
+ *   <li>Factory method for controlled creation</li>
+ *   <li>update() method for modifying category details</li>
+ *   <li>Encapsulated validation logic</li>
+ *   <li>Optimistic locking with @Version</li>
+ * </ul>
+ */
 @Entity
 @Table(
     name = "product_category",
@@ -49,7 +61,16 @@ public class ProductCategory extends BaseEntity {
     @Column(name = "version")
     private Long version;
 
-    // Factory Method
+    // ================= FACTORY METHOD =================
+
+    /**
+     * Creates a new product category with validation.
+     * 
+     * @param categoryName the name of the category
+     * @param description the category description
+     * @return a new ProductCategory instance
+     * @throws BusinessException if validation fails
+     */
     public static ProductCategory create(String categoryName, String description) {
         ProductCategory category = new ProductCategory();
         category.categoryName = validateName(categoryName);
@@ -57,7 +78,15 @@ public class ProductCategory extends BaseEntity {
         return category;
     }
 
-    // Update Method (no public setters)
+    // ================= DOMAIN UPDATE METHOD =================
+
+    /**
+     * Updates the category's name and description.
+     * 
+     * @param categoryName the new category name
+     * @param description the new description
+     * @throws BusinessException if validation fails
+     */
     public void update(String categoryName, String description) {
         this.categoryName = validateName(categoryName);
         this.description = description;

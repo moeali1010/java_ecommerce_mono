@@ -13,6 +13,15 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.EntityListeners;
 import lombok.Getter;
 
+/**
+ * Base entity class providing audit fields for all entities.
+ * 
+ * <p>This class uses Spring Data JPA auditing to automatically populate
+ * created and modified timestamps and user information.
+ * 
+ * <p>All fields are immutable from the entity's perspective - they are
+ * managed automatically by the JPA auditing framework.
+ */
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter

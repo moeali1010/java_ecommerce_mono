@@ -185,6 +185,6 @@ public class AuthController {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
-        throw new IllegalArgumentException("Invalid Authorization header format");
+        throw new IllegalArgumentException("validation.authorization.header.invalid");
     }
 }
