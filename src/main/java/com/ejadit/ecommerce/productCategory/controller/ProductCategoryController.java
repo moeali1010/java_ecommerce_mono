@@ -16,7 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/product-categories")
+@RequestMapping("/api/v1/product-categories")
 @Validated
 @Tag(name = "Product Categories", description = "Product category management endpoints")
 public class ProductCategoryController {

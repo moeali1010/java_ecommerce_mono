@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import static com.ejadit.ecommerce.users.mapper.UserMapper.toUserResponseDto;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 @Validated
 @Tag(name = "Users", description = "User management endpoints")
 public class UserController {
